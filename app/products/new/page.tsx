@@ -1,16 +1,31 @@
 export const dynamic = 'force-dynamic'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import { AddProductForm } from '@/components/products/AddProductForm'
+import { createClient } from '@/lib/supabase/server'
 export const metadata = { title: 'Add New Product' }
-export default function Page() {
+
+export default async function AddProductPage() {
+  let brands: any[] = []
+  let categories: any[] = []
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient()
+      const [b, c] = await Promise.all([
+        supabase.from('brands').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('categories').select('id, name').eq('is_active', true).order('name'),
+      ])
+      brands = b.data ?? []
+      categories = c.data ?? []
+    }
+  } catch {}
   return (
     <AdminLayout currentPage="products">
-      <div className="p-8">
-        <p className="text-[9px] tracking-[3px] uppercase text-[#5A5048] mb-2">products</p>
-        <h1 className="font-display text-3xl font-light mb-8">Add New Product</h1>
-        <div className="card-admin p-12 text-center">
-          <p className="font-display text-2xl text-[#5A5048] mb-2">Coming Soon</p>
-          <p className="text-[10px] text-[#3A3530]">This section is under construction.</p>
+      <div className="p-8 max-w-4xl">
+        <div className="mb-8">
+          <p className="section-eyebrow mb-1">Products</p>
+          <h1 className="font-display text-3xl font-light text-[#2A2420]">Add New Product</h1>
         </div>
+        <AddProductForm brands={brands} categories={categories} />
       </div>
     </AdminLayout>
   )
