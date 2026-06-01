@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic'
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -33,17 +32,17 @@ export default function AdminLoginPage() {
           <div className="text-[9px] tracking-[3px] text-[#5A5048] uppercase">Admin Portal</div>
         </div>
         <form onSubmit={handleLogin} className="bg-[#141414] border border-[rgba(201,168,76,0.15)] p-8 space-y-5">
-          <h1 className="font-display text-2xl font-light mb-6">Staff Sign In</h1>
+          <h1 className="font-display text-2xl font-light mb-2">Staff Sign In</h1>
           {error && <div className="text-[10px] text-red-400 border border-red-400/20 bg-red-400/5 p-3">{error}</div>}
           <div>
             <label className="text-[9px] tracking-[2px] uppercase text-[#6B5E4A] block mb-2">Email</label>
-            <input value={email} onChange={e => setEmail(e.target.value)} type="email" required className="input-admin" placeholder="staff@maisonoir.com" />
+            <input value={email} onChange={e => setEmail(e.target.value)} type="email" required className="w-full px-4 py-3 bg-[#1A1A1A] border border-[rgba(201,168,76,0.15)] text-[#F0EAD6] text-sm outline-none focus:border-[#C9A84C] transition-colors" placeholder="staff@maisonoir.com" />
           </div>
           <div>
             <label className="text-[9px] tracking-[2px] uppercase text-[#6B5E4A] block mb-2">Password</label>
-            <input value={password} onChange={e => setPassword(e.target.value)} type="password" required className="input-admin" placeholder="••••••••" />
+            <input value={password} onChange={e => setPassword(e.target.value)} type="password" required className="w-full px-4 py-3 bg-[#1A1A1A] border border-[rgba(201,168,76,0.15)] text-[#F0EAD6] text-sm outline-none focus:border-[#C9A84C] transition-colors" placeholder="••••••••" />
           </div>
-          <button type="submit" disabled={loading} className="btn-gold w-full py-3.5 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#C9A84C] text-[#0A0A0A] text-[10px] tracking-[2px] uppercase font-semibold hover:bg-[#E8D5A3] transition-colors disabled:opacity-50">
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
