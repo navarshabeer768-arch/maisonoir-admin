@@ -3,62 +3,75 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const STAFF_ROLES = ['founder', 'admin', 'operations_manager', 'marketing_manager', 'customer_support', 'warehouse_staff']
 
-const PUBLIC_PATHS = ['/login', '/_next', '/favicon', '/icon', '/api']
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Always allow public paths — no redirect loop possible
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+  // Only protect dashboard and admin routes
+  const protectedPaths = ['/dashboard', '/products', '/orders', '/customers', '/inventory', '/marketing', '/staff', '/analytics', '/settings']
+  const isProtected = protectedPaths.some(p => pathname.startsWith(p))
+
+  if (!isProtected) {
     return NextResponse.next()
   }
 
-  // If Supabase env vars not set, just allow through (prevents crash)
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  // If env vars missing, redirect to login
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   const response = NextResponse.next({ request: { headers: request.headers } })
 
   try {
+    // Use SERVICE ROLE KEY to bypass RLS when checking profile
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() { return request.cookies.getAll() },
           setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-            cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
           },
         },
       }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    const { data: profile } = await supabase
+    // Use service role to fetch profile (bypasses RLS)
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role, is_active')
       .eq('id', user.id)
       .single()
 
-    if (!profile || !STAFF_ROLES.includes(profile.role) || !profile.is_active) {
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError?.message)
+      return NextResponse.redirect(new URL('/login?error=profile_not_found', request.url))
+    }
+
+    if (!STAFF_ROLES.includes(profile.role)) {
       return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
     }
 
+    if (!profile.is_active) {
+      return NextResponse.redirect(new URL('/login?error=inactive', request.url))
+    }
+
     return response
-  } catch {
-    // On any error, redirect to login safely
-    return NextResponse.redirect(new URL('/login', request.url))
+  } catch (err) {
+    console.error('Middleware error:', err)
+    return NextResponse.redirect(new URL('/login?error=server_error', request.url))
   }
 }
 
 export const config = {
-  // Only run on actual app routes, never on login or static files
   matcher: [
     '/dashboard/:path*',
     '/products/:path*',
