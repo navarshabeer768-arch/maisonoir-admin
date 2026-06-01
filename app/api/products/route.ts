@@ -1,53 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createAdminClient()
+    const cookieStore = await cookies()
+
+    // Use service role to bypass RLS
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll(c: { name: string; value: string; options: CookieOptions }[]) {
+            try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {}
+          },
+        },
+      }
+    )
+
+    // Verify user is logged in
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Unauthorized - not logged in' }, { status: 401 })
 
     const body = await req.json()
     const { variants, ...productData } = body
 
-    // Clean up empty fields
-    const cleanProduct: any = {}
-    Object.entries(productData).forEach(([k, v]) => {
-      if (v !== '' && v !== null && v !== undefined) cleanProduct[k] = v
-    })
+    // Build clean product object - remove empty strings
+    const product: Record<string, any> = {}
+    for (const [k, v] of Object.entries(productData)) {
+      if (v !== '' && v !== null && v !== undefined && v !== false || typeof v === 'boolean') {
+        product[k] = v
+      }
+    }
 
-    // Convert numbers
-    if (cleanProduct.release_year) cleanProduct.release_year = parseInt(cleanProduct.release_year)
-    if (cleanProduct.longevity_rating) cleanProduct.longevity_rating = parseFloat(cleanProduct.longevity_rating)
-    if (cleanProduct.sillage_rating) cleanProduct.sillage_rating = parseFloat(cleanProduct.sillage_rating)
-    if (cleanProduct.projection_rating) cleanProduct.projection_rating = parseFloat(cleanProduct.projection_rating)
-    if (cleanProduct.versatility_rating) cleanProduct.versatility_rating = parseFloat(cleanProduct.versatility_rating)
+    // Ensure required fields
+    if (!product.name) return NextResponse.json({ error: 'Product name is required' }, { status: 400 })
+    if (!product.slug) return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
 
-    const { data: product, error: productError } = await supabase
-      .from('products').insert(cleanProduct).select().single()
+    // Convert numeric strings
+    const numericFields = ['release_year', 'longevity_rating', 'sillage_rating', 'projection_rating', 'versatility_rating']
+    numericFields.forEach(f => { if (product[f]) product[f] = parseFloat(product[f]) })
 
-    if (productError) return NextResponse.json({ error: productError.message }, { status: 400 })
+    // Remove empty string IDs
+    if (!product.brand_id) delete product.brand_id
+    if (!product.category_id) delete product.category_id
+    if (!product.fragrance_family) delete product.fragrance_family
+    if (!product.concentration) delete product.concentration
+    if (!product.gender_target) delete product.gender_target
+
+    const { data: newProduct, error: productError } = await supabase
+      .from('products')
+      .insert(product)
+      .select()
+      .single()
+
+    if (productError) {
+      console.error('Product insert error:', productError)
+      return NextResponse.json({ error: productError.message, details: productError }, { status: 400 })
+    }
 
     // Insert variants
     if (variants?.length) {
       const cleanVariants = variants
         .filter((v: any) => v.size_ml && v.price)
         .map((v: any) => ({
-          product_id: product.id,
+          product_id: newProduct.id,
           size_ml: parseInt(v.size_ml),
           price: parseFloat(v.price),
           compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : null,
           stock_quantity: v.stock_quantity ? parseInt(v.stock_quantity) : 0,
-          sku: v.sku || `MN-${product.id.slice(0,6)}-${v.size_ml}`,
+          sku: v.sku || `MN-${Date.now()}-${v.size_ml}`,
+          is_active: true,
         }))
 
       if (cleanVariants.length) {
-        await supabase.from('product_variants').insert(cleanVariants)
+        const { error: variantError } = await supabase.from('product_variants').insert(cleanVariants)
+        if (variantError) console.error('Variant insert error:', variantError)
       }
     }
 
-    return NextResponse.json({ product }, { status: 201 })
+    return NextResponse.json({ product: newProduct, message: 'Product created successfully' }, { status: 201 })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    console.error('API error:', e)
+    return NextResponse.json({ error: e.message || 'Unknown error' }, { status: 500 })
   }
 }
