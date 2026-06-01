@@ -1,111 +1,63 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, ShoppingBag, Package, Users, BarChart3,
-  Tag, MessageSquare, Settings, ChevronDown, ChevronRight,
-  ExternalLink, LogOut, Bell, Sun, Moon, Warehouse, Megaphone, UserCog
+  Megaphone, MessageSquare, Settings, ChevronDown, ChevronRight,
+  ExternalLink, LogOut, Bell, Warehouse, UserCog, Menu, X
 } from 'lucide-react'
-import { useTheme } from './ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
-type NavItem = {
-  label: string
-  href: string
-  icon: React.ElementType
-  roles?: string[]
-  badge?: string
-  children?: { label: string; href: string }[]
-}
-
-const NAV: NavItem[] = [
-  {
-    label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard,
-  },
-  {
-    label: 'Analytics', href: '/analytics', icon: BarChart3,
-    children: [
-      { label: 'Revenue', href: '/analytics/revenue' },
-      { label: 'Products', href: '/analytics/products' },
-      { label: 'Customers', href: '/analytics/customers' },
-      { label: 'Inventory', href: '/analytics/inventory' },
-    ],
-  },
-  {
-    label: 'Products', href: '/products', icon: ShoppingBag,
-    children: [
-      { label: 'All Products', href: '/products' },
-      { label: 'Add Product', href: '/products/new' },
-      { label: 'Categories', href: '/products/categories' },
-      { label: 'Brands', href: '/products/brands' },
-      { label: 'Bulk Import', href: '/products/import' },
-    ],
-  },
-  {
-    label: 'Orders', href: '/orders', icon: Package,
-    children: [
-      { label: 'All Orders', href: '/orders' },
-      { label: 'Pending', href: '/orders?status=pending' },
-      { label: 'Returns', href: '/orders/returns' },
-      { label: 'Refunds', href: '/orders/refunds' },
-    ],
-  },
-  {
-    label: 'Inventory', href: '/inventory', icon: Warehouse,
-    roles: ['founder', 'admin', 'operations_manager', 'warehouse_staff'],
-  },
-  {
-    label: 'Customers', href: '/customers', icon: Users,
-    children: [
-      { label: 'All Customers', href: '/customers' },
-      { label: 'Loyalty Program', href: '/customers/loyalty' },
-      { label: 'Reviews', href: '/customers/reviews' },
-    ],
-  },
-  {
-    label: 'Marketing', href: '/marketing', icon: Megaphone,
-    roles: ['founder', 'admin', 'marketing_manager'],
-    children: [
-      { label: 'Campaigns', href: '/marketing/campaigns' },
-      { label: 'Coupons', href: '/marketing/coupons' },
-      { label: 'Email', href: '/marketing/email' },
-    ],
-  },
-  {
-    label: 'Support', href: '/support', icon: MessageSquare,
-    badge: '3',
-    roles: ['founder', 'admin', 'customer_support'],
-  },
-  {
-    label: 'Staff', href: '/staff', icon: UserCog,
-    roles: ['founder', 'admin'],
-  },
-  {
-    label: 'Settings', href: '/settings', icon: Settings,
-    roles: ['founder', 'admin'],
-  },
+const NAV = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3, children: [
+    { label: 'Revenue', href: '/analytics/revenue' },
+    { label: 'Products', href: '/analytics/products' },
+    { label: 'Customers', href: '/analytics/customers' },
+  ]},
+  { label: 'Products', href: '/products', icon: ShoppingBag, children: [
+    { label: 'All Products', href: '/products' },
+    { label: 'Add Product', href: '/products/new' },
+    { label: 'Categories', href: '/products/categories' },
+    { label: 'Brands', href: '/products/brands' },
+    { label: 'Bulk Import', href: '/products/import' },
+  ]},
+  { label: 'Orders', href: '/orders', icon: Package, children: [
+    { label: 'All Orders', href: '/orders' },
+    { label: 'Returns', href: '/orders/returns' },
+    { label: 'Refunds', href: '/orders/refunds' },
+  ]},
+  { label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { label: 'Customers', href: '/customers', icon: Users, children: [
+    { label: 'All Customers', href: '/customers' },
+    { label: 'Loyalty', href: '/customers/loyalty' },
+    { label: 'Reviews', href: '/customers/reviews' },
+  ]},
+  { label: 'Marketing', href: '/marketing', icon: Megaphone, children: [
+    { label: 'Campaigns', href: '/marketing/campaigns' },
+    { label: 'Coupons', href: '/marketing/coupons' },
+    { label: 'Email', href: '/marketing/email' },
+  ]},
+  { label: 'Support', href: '/support', icon: MessageSquare },
+  { label: 'Staff', href: '/staff', icon: UserCog },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 interface AdminLayoutProps {
   children: React.ReactNode
   currentPage?: string
-  userRole?: string
 }
 
-export function AdminLayout({ children, userRole = 'admin' }: AdminLayoutProps) {
-  const [expanded, setExpanded] = useState<string[]>(['dashboard'])
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+export function AdminLayout({ children }: AdminLayoutProps) {
+  const [expanded, setExpanded] = useState<string[]>([])
+  const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
-  const { theme, toggleTheme } = useTheme()
   const router = useRouter()
   const supabase = createClient()
 
-  const toggleExpand = (href: string) => {
-    setExpanded(prev =>
-      prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href]
-    )
+  const toggle = (href: string) => {
+    setExpanded(prev => prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href])
   }
 
   const handleLogout = async () => {
@@ -113,29 +65,26 @@ export function AdminLayout({ children, userRole = 'admin' }: AdminLayoutProps) 
     router.push('/login')
   }
 
-  const filteredNav = NAV.filter(item =>
-    !item.roles || item.roles.includes(userRole)
-  )
-
   return (
-    <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
+    <div className="flex h-screen bg-[#F5F2EE] overflow-hidden">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} flex-shrink-0 bg-[#111111] border-r border-[rgba(201,168,76,0.1)] flex flex-col transition-all duration-300 overflow-hidden`}>
+      <aside className={`${collapsed ? 'w-16' : 'w-60'} flex-shrink-0 bg-white border-r border-[rgba(42,36,32,0.08)] flex flex-col transition-all duration-300 shadow-sm`}>
         {/* Logo */}
-        <div className="px-6 py-7 border-b border-[rgba(201,168,76,0.1)]">
-          {sidebarOpen ? (
+        <div className={`px-5 py-5 border-b border-[rgba(42,36,32,0.06)] flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+          {!collapsed && (
             <div>
-              <div className="font-display text-lg tracking-[4px] text-[#C9A84C] uppercase">Maison Noir</div>
-              <div className="text-[8px] tracking-[3px] text-[#5A5048] uppercase mt-1">Founder Control Panel</div>
+              <div className="font-display text-lg tracking-[4px] text-[#C9A84C] uppercase leading-none">Maison Noir</div>
+              <div className="text-[8px] tracking-[2px] text-[#9A8A7A] uppercase mt-0.5">Admin Panel</div>
             </div>
-          ) : (
-            <div className="font-display text-lg text-[#C9A84C]">M</div>
           )}
+          <button onClick={() => setCollapsed(!collapsed)} className="text-[#9A8A7A] hover:text-[#2A2420] transition-colors p-1">
+            {collapsed ? <Menu size={16} /> : <X size={14} />}
+          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
-          {filteredNav.map((item) => {
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          {NAV.map((item) => {
             const Icon = item.icon
             const isActive = pathname.startsWith(item.href)
             const isExpanded = expanded.includes(item.href)
@@ -144,42 +93,35 @@ export function AdminLayout({ children, userRole = 'admin' }: AdminLayoutProps) 
             return (
               <div key={item.href} className="mb-0.5">
                 <button
-                  onClick={() => {
-                    if (hasChildren) { toggleExpand(item.href) } else { router.push(item.href) }
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-all duration-200 text-left border-l-2 ${
+                  onClick={() => { hasChildren ? toggle(item.href) : router.push(item.href) }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md transition-all duration-150 text-left ${
                     isActive
-                      ? 'text-[#C9A84C] border-[#C9A84C] bg-[rgba(201,168,76,0.06)]'
-                      : 'text-[#6B5E4A] border-transparent hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.04)]'
+                      ? 'bg-[rgba(201,168,76,0.1)] text-[#9A7A35] font-medium'
+                      : 'text-[#6B5E4A] hover:bg-[rgba(42,36,32,0.04)] hover:text-[#2A2420]'
                   }`}
                 >
-                  <Icon size={16} className="shrink-0" />
-                  {sidebarOpen && (
+                  <Icon size={15} className="shrink-0" />
+                  {!collapsed && (
                     <>
-                      <span className="text-[11px] tracking-[0.5px] flex-1">{item.label}</span>
-                      {item.badge && (
-                        <span className="w-5 h-5 bg-[#C9A84C] text-[#0A0A0A] text-[9px] font-bold rounded-full flex items-center justify-center">
-                          {item.badge}
-                        </span>
+                      <span className="text-[11px] tracking-[0.3px] flex-1">{item.label}</span>
+                      {hasChildren && (
+                        isExpanded
+                          ? <ChevronDown size={11} className="opacity-60" />
+                          : <ChevronRight size={11} className="opacity-60" />
                       )}
-                      {hasChildren && (isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />)}
                     </>
                   )}
                 </button>
 
-                {/* Children */}
-                {hasChildren && isExpanded && sidebarOpen && (
-                  <div className="ml-6 mt-0.5 space-y-0.5 border-l border-[rgba(201,168,76,0.1)] pl-3">
+                {hasChildren && isExpanded && !collapsed && (
+                  <div className="ml-5 mt-0.5 space-y-0.5 border-l-2 border-[rgba(201,168,76,0.2)] pl-3">
                     {item.children!.map(child => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`block py-2 px-2 text-[10px] tracking-[0.5px] transition-colors ${
+                      <Link key={child.href} href={child.href}
+                        className={`block py-1.5 px-2 text-[10px] tracking-[0.3px] rounded transition-colors ${
                           pathname === child.href
-                            ? 'text-[#C9A84C]'
-                            : 'text-[#5A5048] hover:text-[#C9A84C]'
-                        }`}
-                      >
+                            ? 'text-[#C9A84C] font-medium bg-[rgba(201,168,76,0.06)]'
+                            : 'text-[#9A8A7A] hover:text-[#2A2420]'
+                        }`}>
                         {child.label}
                       </Link>
                     ))}
@@ -190,31 +132,16 @@ export function AdminLayout({ children, userRole = 'admin' }: AdminLayoutProps) 
           })}
         </nav>
 
-        {/* Bottom actions */}
-        {sidebarOpen && (
-          <div className="p-4 border-t border-[rgba(201,168,76,0.1)] space-y-1">
-            <a
-              href={process.env.NEXT_PUBLIC_STORE_URL ?? 'https://maisonoir.com'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 text-[10px] text-[#5A5048] hover:text-[#C9A84C] transition-colors"
-            >
-              <ExternalLink size={14} />
-              View Storefront
+        {/* Bottom */}
+        {!collapsed && (
+          <div className="p-3 border-t border-[rgba(42,36,32,0.06)] space-y-0.5">
+            <a href={process.env.NEXT_PUBLIC_STORE_URL ?? 'https://maisonoir.com'} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 text-[10px] text-[#9A8A7A] hover:text-[#2A2420] hover:bg-[rgba(42,36,32,0.04)] rounded transition-colors">
+              <ExternalLink size={13} /> View Storefront
             </a>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-2 px-3 py-2 text-[10px] text-[#5A5048] hover:text-[#C9A84C] transition-colors w-full"
-            >
-              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 text-[10px] text-[#5A5048] hover:text-red-400 transition-colors w-full"
-            >
-              <LogOut size={14} />
-              Sign Out
+            <button onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-[10px] text-[#9A8A7A] hover:text-red-500 hover:bg-red-50 rounded transition-colors w-full">
+              <LogOut size={13} /> Sign Out
             </button>
           </div>
         )}
@@ -223,26 +150,24 @@ export function AdminLayout({ children, userRole = 'admin' }: AdminLayoutProps) 
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 border-b border-[rgba(201,168,76,0.1)] bg-[#111111] flex items-center justify-between px-6 shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-[#5A5048] hover:text-[#C9A84C] transition-colors"
-          >
-            <LayoutDashboard size={16} />
-          </button>
-          <div className="flex items-center gap-4">
-            <button className="relative text-[#5A5048] hover:text-[#C9A84C] transition-colors">
+        <header className="h-13 bg-white border-b border-[rgba(42,36,32,0.08)] flex items-center justify-between px-6 py-3 shrink-0 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+            <span className="text-[9px] tracking-[1px] text-[#9A8A7A] uppercase">Live</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="relative text-[#9A8A7A] hover:text-[#2A2420] transition-colors">
               <Bell size={16} />
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#C9A84C] text-[#0A0A0A] text-[8px] font-bold rounded-full flex items-center justify-center">3</span>
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#C9A84C] text-white text-[7px] font-bold rounded-full flex items-center justify-center">3</span>
             </button>
-            <div className="w-8 h-8 bg-[rgba(201,168,76,0.15)] border border-[rgba(201,168,76,0.3)] flex items-center justify-center font-display text-sm text-[#C9A84C]">
+            <div className="w-8 h-8 bg-[rgba(201,168,76,0.15)] border border-[rgba(201,168,76,0.3)] flex items-center justify-center font-display text-sm text-[#C9A84C] rounded-full">
               F
             </div>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto bg-[#0A0A0A]">
+        <main className="flex-1 overflow-y-auto bg-[#F5F2EE]">
           {children}
         </main>
       </div>

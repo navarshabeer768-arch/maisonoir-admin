@@ -3,24 +3,60 @@
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-font-smoothing: antialiased; }
-  body { @apply bg-[#0A0A0A] text-[#F0EAD6]; }
+
+  body {
+    background: #F5F2EE;
+    color: #2A2420;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+  }
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
-  ::selection { background: rgba(201,168,76,0.25); color: #C9A84C; }
+  ::selection { background: rgba(201,168,76,0.2); color: #9A7A35; }
+  h1, h2, h3, h4 { font-family: var(--font-cormorant), Georgia, serif; }
 }
 
 @layer components {
-  .btn-gold { @apply px-6 py-2.5 bg-[#C9A84C] text-[#0A0A0A] text-[10px] tracking-[2px] uppercase font-semibold hover:bg-[#E8D5A3] transition-colors cursor-pointer; }
-  .btn-outline-gold { @apply px-6 py-2.5 border border-[#C9A84C] text-[#C9A84C] text-[10px] tracking-[2px] uppercase hover:bg-[rgba(201,168,76,0.1)] transition-colors cursor-pointer; }
-  .input-admin { @apply w-full px-4 py-2.5 bg-[#1A1A1A] border border-[rgba(201,168,76,0.15)] text-[#F0EAD6] text-sm outline-none focus:border-[#C9A84C] transition-colors placeholder:text-[#4A4A4A]; }
-  .card-admin { @apply bg-[#141414] border border-[rgba(201,168,76,0.1)]; }
-  .gold-text { @apply text-[#C9A84C]; }
-  .status-pending { @apply bg-yellow-500/10 text-yellow-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
-  .status-confirmed { @apply bg-blue-500/10 text-blue-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
-  .status-shipped { @apply bg-[rgba(201,168,76,0.1)] text-[#C9A84C] px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
-  .status-delivered { @apply bg-emerald-500/10 text-emerald-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
-  .status-cancelled { @apply bg-red-500/10 text-red-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  /* Buttons */
+  .btn-gold {
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-[#C9A84C] text-white
+    text-[9px] tracking-[2px] uppercase font-semibold
+    hover:bg-[#9A7A35] transition-colors duration-200 cursor-pointer;
+  }
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-transparent text-[#C9A84C]
+    border border-[#C9A84C] text-[9px] tracking-[2px] uppercase
+    hover:bg-[#C9A84C] hover:text-white transition-all duration-200 cursor-pointer;
+  }
+  .btn-dark {
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-[#2A2420] text-white
+    text-[9px] tracking-[2px] uppercase font-semibold
+    hover:bg-[#3D342C] transition-colors duration-200 cursor-pointer;
+  }
+
+  /* Cards */
+  .card-admin {
+    @apply bg-white border border-[rgba(42,36,32,0.08)] shadow-sm;
+  }
+
+  /* Inputs */
+  .input-admin {
+    @apply w-full px-4 py-2.5 bg-white border border-[rgba(42,36,32,0.15)] text-[#2A2420]
+    text-sm outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[rgba(201,168,76,0.2)]
+    transition-colors placeholder:text-[#9A8A7A];
+  }
+
+  /* Typography helpers */
+  .gold-text { color: #C9A84C; }
+  .section-eyebrow { @apply text-[9px] tracking-[4px] uppercase text-[#C9A84C] font-semibold; }
+
+  /* Status badges */
+  .status-pending   { @apply bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-confirmed { @apply bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-shipped   { @apply bg-[rgba(201,168,76,0.1)] text-[#9A7A35] border border-[rgba(201,168,76,0.3)] px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-delivered { @apply bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-cancelled { @apply bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
 }

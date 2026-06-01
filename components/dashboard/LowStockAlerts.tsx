@@ -1,55 +1,35 @@
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
-
-interface StockItem {
-  id: string
-  sku: string
-  size_ml: number
-  stock_quantity: number
-  reserved_quantity: number
-  low_stock_threshold: number
-  product?: { name: string; brand?: { name: string } | null; images?: { url: string; is_primary: boolean }[] | null } | null
-}
-
+interface StockItem { id: string; sku: string; size_ml: number; stock_quantity: number; reserved_quantity: number; low_stock_threshold: number; product?: any }
 export function LowStockAlerts({ items }: { items: StockItem[] }) {
   return (
-    <div className="card-admin p-5">
+    <div className="bg-white border border-[rgba(42,36,32,0.07)] p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={14} className="text-amber-400" />
-          <p className="font-display text-lg text-[#F0EAD6]">Low Stock</p>
+          <AlertTriangle size={14} className="text-amber-500" />
+          <p className="font-display text-lg text-[#2A2420]">Low Stock</p>
         </div>
-        <Link href="/inventory?filter=low-stock" className="text-[9px] tracking-[1px] uppercase text-[#C9A84C] hover:text-[#E8D5A3] transition-colors">
-          Manage →
-        </Link>
+        <Link href="/inventory?filter=low-stock" className="text-[9px] uppercase text-[#C9A84C] hover:text-[#9A7A35] transition-colors font-medium">Manage →</Link>
       </div>
-
       {items.length === 0 ? (
-        <p className="text-[11px] text-emerald-400 flex items-center gap-2">
-          <span>✓</span> All stock levels healthy
-        </p>
+        <p className="text-[11px] text-emerald-600 flex items-center gap-2 font-medium"><span>✓</span> All stock levels healthy</p>
       ) : (
         <div className="space-y-3">
-          {items.slice(0, 5).map(item => {
+          {items.slice(0,5).map(item => {
             const available = item.stock_quantity - item.reserved_quantity
             return (
-              <div key={item.id} className="flex items-center justify-between border-b border-[rgba(201,168,76,0.06)] pb-3 last:border-0 last:pb-0">
+              <div key={item.id} className="flex items-center justify-between border-b border-[rgba(42,36,32,0.05)] pb-3 last:border-0 last:pb-0">
                 <div className="min-w-0 pr-2">
-                  <p className="text-[10px] text-[#F0EAD6] truncate">{item.product?.name}</p>
-                  <p className="text-[9px] text-[#4A4A4A]">{item.size_ml}ml · {item.sku}</p>
+                  <p className="text-[10px] text-[#2A2420] truncate font-medium">{item.product?.name}</p>
+                  <p className="text-[9px] text-[#9A8A7A]">{item.size_ml}ml · {item.sku}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`text-base font-display ${available <= 0 ? 'text-red-400' : 'text-amber-400'}`}>
-                    {available}
-                  </p>
-                  <p className="text-[8px] text-[#4A4A4A]">left</p>
+                  <p className={`text-base font-display ${available <= 0 ? 'text-red-500' : 'text-amber-500'}`}>{available}</p>
+                  <p className="text-[8px] text-[#9A8A7A]">left</p>
                 </div>
               </div>
             )
           })}
-          {items.length > 5 && (
-            <p className="text-[9px] text-[#4A4A4A] text-center">+{items.length - 5} more items</p>
-          )}
         </div>
       )}
     </div>
