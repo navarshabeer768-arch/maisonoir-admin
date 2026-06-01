@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { @apply bg-[#0A0A0A] text-[#F0EAD6]; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+  ::selection { background: rgba(201,168,76,0.25); color: #C9A84C; }
+}
+
+@layer components {
+  .btn-gold { @apply px-6 py-2.5 bg-[#C9A84C] text-[#0A0A0A] text-[10px] tracking-[2px] uppercase font-semibold hover:bg-[#E8D5A3] transition-colors cursor-pointer; }
+  .btn-outline-gold { @apply px-6 py-2.5 border border-[#C9A84C] text-[#C9A84C] text-[10px] tracking-[2px] uppercase hover:bg-[rgba(201,168,76,0.1)] transition-colors cursor-pointer; }
+  .input-admin { @apply w-full px-4 py-2.5 bg-[#1A1A1A] border border-[rgba(201,168,76,0.15)] text-[#F0EAD6] text-sm outline-none focus:border-[#C9A84C] transition-colors placeholder:text-[#4A4A4A]; }
+  .card-admin { @apply bg-[#141414] border border-[rgba(201,168,76,0.1)]; }
+  .gold-text { @apply text-[#C9A84C]; }
+  .status-pending { @apply bg-yellow-500/10 text-yellow-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-confirmed { @apply bg-blue-500/10 text-blue-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-shipped { @apply bg-[rgba(201,168,76,0.1)] text-[#C9A84C] px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-delivered { @apply bg-emerald-500/10 text-emerald-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+  .status-cancelled { @apply bg-red-500/10 text-red-400 px-2.5 py-1 text-[8px] tracking-[1.5px] uppercase; }
+}
